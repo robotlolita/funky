@@ -1,0 +1,41 @@
+function mangle(id) {
+  return '_' + id;
+}
+
+function toJsOp(op) {
+  switch (op) {
+    case '=':  return '===';
+    case '<>': return '!==';
+    default:   return op;
+  }
+}
+
+ometa FunkyCompiler {
+  compile = 
+    ['prog' [compile*:xs]]
+    -> { xs.join('\n\n') }
+
+  | ['fun' :id :params compile:body]
+    -> { 'function ' + mangle(id) + '(' 
+       +   params.map(mangle).join(', ') 
+       + ') {\n' 
+       + '  if (arguments.length !== ' + params.length + ') {\n'
+       + '    throw new Error("' + id + ' expects ' + params.length + ' arguments.");\n'
+       + '  }\n'
+       + '  return ' + body + ';\n'
+       + '}'
+       }
+
+  | ['if' compile:test compile:ifTrue compile:ifFalse]
+    -> { '(' + test + ' ? ' + ifTrue + ' : ' + ifFalse + ')' }
+
+  | ['op' :op compile:left compile:right]
+    -> { '(' + left + toJsOp(op) + right + ')' }
+
+  | ['call' compile:fn [compile*:args]]
+    -> { fn + '(' + args.join(', ') + ')' }
+
+  | ['num' :n]  -> { n }
+  | ['bool' :b] -> { b }
+  | ['var' :i]  -> { mangle(i) }
+}

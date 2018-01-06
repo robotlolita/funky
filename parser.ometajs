@@ -1,0 +1,49 @@
+function notReserved(x) {
+  return !['let', 'if', 'then', 'else', 'true', 'false'].includes(x);
+}
+
+ometa FunkyParser {
+  kw :xs = seq(xs) ~(letter | digit | ':'),
+
+  // Lexical structure
+  letter     = /[a-z_]/,
+  identifier = <letter+>:id ?notReserved(id),
+  digit      = /[0-9]/,
+  number     = <digit+>,
+  boolean    = kw("true") | kw("false"),
+
+  comment = fromTo('#', '\n'),
+  wspace = /\s/,
+  _ = (wspace | comment)*,
+  eof = ~char,
+  
+  // Syntactic structure
+  Program = 
+    (_ Function)*:xs _ eof
+    -> ['prog', xs],
+
+  Function = 
+    kw("let") _ identifier:i _ Parameters:p _ ':' _ Expression:e
+    -> ['fun', i, p, e],
+
+  Parameters = 
+    '(' _ ')' -> []
+  | '(' _ identifier:i (_ ',' _ identifier)*:is _ ')' -> [i].concat(is),
+
+  Expression =
+    kw("if") _ Expression:a _ kw("then") _ Expression:b _ kw("else") _ Expression:c
+    -> ['if', a, b, c]
+  | Expression:l _ ('=' | seq('<>') | seq('<=') | seq('>=') | '<' | '>'):o _ Expression:r
+    -> ['op', o, l, r]
+  | Expression:l _ ('+' | '-' | '*' | '/'):o _ Expression:r
+    -> ['op', o, l, r]
+  | Expression:f _ Arguments:xs
+    -> ['call', f, xs]
+  | number:n     -> ['num', n]
+  | boolean:b    -> ['bool', b]
+  | identifier:i -> ['var', i],
+
+  Arguments =
+    '(' _ ')' -> []
+  | '(' _ Expression:i (_ ',' _ Expression)*:is _ ')' -> [i].concat(is)
+}

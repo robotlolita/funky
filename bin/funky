@@ -1,0 +1,11 @@
+#!/usr/bin/env node
+const { parse, interpret } = require('../');
+const fs = require('fs');
+
+const [input] = process.argv.slice(2);
+if (!input) {
+  throw new Error(`Usage: funkyc program.fun > output.js`);
+}
+
+const source = fs.readFileSync(input, 'utf8');
+interpret(parse(source));
