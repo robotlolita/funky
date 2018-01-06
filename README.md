@@ -2,6 +2,8 @@
 
 A tiny little language written to answer a Quora question because :'>
 
+[How does one create a programming language?](https://www.quora.com/How-does-one-create-a-programming-language/answer/Quildreen-Motta)
+
 
 ## Usage
 
